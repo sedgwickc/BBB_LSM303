@@ -59,8 +59,8 @@ short Adafruit_LSM303::combineRegisters(unsigned char msb, unsigned char lsb){
 */
 /**************************************************************************/
 Adafruit_LSM303::Adafruit_LSM303(unsigned int I2CBus){
-	this->i2c_mag = new I2CDevice(I2CBus, (unsigned int)LSM303_ADDRESS_MAG);
-	this->i2c_accel = new I2CDevice(I2CBus, (unsigned int)LSM303_ADDRESS_ACCEL);
+	this->i2c_mag = new I2CDevice(I2CBus, 0x1E);
+	this->i2c_accel = new I2CDevice(I2CBus, 0x19);
 	this->_lsm303Accel_MG_LSB     = 0.001F;   // 1, 2, 4 or 12 mg per lsb
 	this->_lsm303Mag_Gauss_LSB_XY = 1100.0F;  // Varies with gain
 	this->_lsm303Mag_Gauss_LSB_Z  = 980.0F;   // Varies with gain
@@ -316,6 +316,7 @@ uint8_t Adafruit_LSM303::read8(unsigned int address, unsigned int reg)
 		return (uint8_t)this->i2c_accel->readRegister(reg);
 	}else{
 		cout<<"writeCommand(): Invalid Address!"<<endl;
+		return 0;
 	}
 }
 
