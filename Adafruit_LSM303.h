@@ -21,6 +21,10 @@
 #include "../../I2CDevice.h"
 
 namespace rover {
+
+class Adafruit_LSM303
+{
+  public:
 /*=========================================================================
     I2C ADDRESS/BITS
     -----------------------------------------------------------------------*/
@@ -28,9 +32,14 @@ namespace rover {
     #define LSM303_ADDRESS_MAG            (0x3C >> 1)         // 0011110x
 /*=========================================================================*/
 
-class Adafruit_LSM303:protected I2CDevice
-{
-  public:
+/*=========================================================================
+    Constants
+    -----------------------------------------------------------------------*/
+	#define SENSORS_GAUSS_TO_MICROTESLA (100) //Gauss to micro-Tesla multiplier
+	#define SENSORS_GRAVITY_EARTH       (9.80665F) // Earth's gravity in m/s^2 
+	#define SENSORS_GRAVITY_STANDARD	(SENSORS_GRAVITY_EARTH)
+/*=========================================================================*/
+
 /*=========================================================================
     REGISTERS
     -----------------------------------------------------------------------*/
@@ -148,22 +157,33 @@ class Adafruit_LSM303:protected I2CDevice
 /*=========================================================================*/
 
 public:
-    Adafruit_LSM303(unsigned int I2CBus, unsigned int I2CAddressMag = LSM303_ADDRESS_MAG, unsigned int I2CAddressAccel = LSM303_ADDRESS_ACCEL);
+    Adafruit_LSM303(unsigned int I2CBus);
 
+    virtual bool  begin();
+    virtual void getOrientation(float*x,float*y,float*z);
+    virtual void getAcceleration(float*x,float*y,float*z);
+	void cleanup();
+    virtual ~Adafruit_LSM303();
 private:
     lsm303AccelData _accelData;   // Last read accelerometer data will be available here
     lsm303MagGain   _magGain;
     lsm303MagData   _magData;     // Last read magnetometer data will be available here
-	unsigned int I2CBus, I2CAddress;
-	unsigned char *registers;
-	virtual void writeCommand(unsigned int reg, unsigned char value);
-	virtual void read8(unsigned int, uint8_t*);
-	virtual void read16(unsigned int, uint16_t*);
-	virtual void readS16(unsigned int, int16_t*);
-	virtual short combineRegisters(unsigned char, unsigned char);
+	bool _autoRangeEnabled;
+	float _lsm303Accel_MG_LSB;
+	float _lsm303Mag_Gauss_LSB_Z;
+	float _lsm303Mag_Gauss_LSB_XY;
 
-    virtual bool  begin();
-    virtual ~Adafruit_LSM303();
+	I2CDevice* i2c_mag;
+	I2CDevice* i2c_accel;
+	unsigned int I2CBus, I2CAddress;
+	virtual void writeCommand(unsigned int address, unsigned int reg, unsigned char value);
+	virtual uint8_t read8(unsigned int, unsigned int);
+	virtual short combineRegisters(unsigned char, unsigned char);
+ 	virtual void readAccelerometer();
+	virtual void readMagnetometerData();
+	virtual void enableAutoRange(bool enabled);
+	virtual void setMagGain(lsm303MagGain gain);
+	virtual void setMagRate(lsm303MagRate rate);
 
 };
 

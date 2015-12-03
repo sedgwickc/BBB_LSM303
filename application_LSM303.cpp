@@ -23,7 +23,7 @@
  */
 
 #include <iostream>
-#include "Adafruit_BMP180.h"
+#include "Adafruit_LSM303.h"
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -34,21 +34,33 @@ using namespace rover;
 
 int main() {
 
-	Adafruit_BMP180 BMP180(1,0x77);
-	if( BMP180.begin() == false)
+	Adafruit_LSM303 LSM303(1);
+	if( LSM303.begin() == false)
 	{
-		std::cout<<"Could not find a valid BMP180!\n"<<std::flush;
+		std::cout<<"Could not find a valid LSM303!\n"<<endl;
 		return 0;
 	}
+	float mag_x = 0.0;
+	float mag_y = 0.0;
+	float mag_z = 0.0;
+	float acc_x = 0.0;
+	float acc_y = 0.0;
+	float acc_z = 0.0;
 
-	float* temp = (float*)calloc(1,sizeof(float));
-	float* pressure = (float*)calloc(1, sizeof(float));
-	std::cout<<"Getting Temps"<<endl;
-	BMP180.getTemperature(temp);
-	BMP180.getPressure(pressure);
+	std::cout<<"Getting acceleration and orientation..."<<endl;
+	LSM303.getOrientation(&mag_x, &mag_y, &mag_z);
+	LSM303.getAcceleration(&acc_x, &acc_y, &acc_z);
+	LSM303.cleanup();
 
-	printf("Temp: %f\n", *temp);
-	printf("Pressure: %f\n", *pressure);
+	std::cout<<"Acceleration:"<<endl;
+	std::cout<<"x: "<<acc_x<<endl;
+	std::cout<<"y: "<<acc_y<<endl;
+	std::cout<<"z: "<<acc_z<<endl;
+	
+	std::cout<<"Orientation:"<<endl;
+	std::cout<<"x: "<<mag_x<<endl;
+	std::cout<<"y: "<<mag_y<<endl;
+	std::cout<<"z: "<<mag_z<<endl;
 
 	return 0;
 }
