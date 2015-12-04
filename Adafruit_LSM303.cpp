@@ -337,6 +337,26 @@ bool Adafruit_LSM303::begin()
 	{
 		return false;
 	}  
+#ifdef DEBUG
+	cout<<"begin(): Accelerometer enabled..."<<endl;
+#endif
+	// Enable the magnetometer
+	this->writeCommand(LSM303_ADDRESS_MAG, LSM303_REGISTER_MAG_MR_REG_M, 0x00);
+
+	// LSM303DLHC has no WHOAMI register so read CRA_REG_M to check
+	// the default value (0b00010000/0x10)
+	uint8_t reg1_m = this->read8(LSM303_ADDRESS_MAG, LSM303_REGISTER_MAG_CRA_REG_M);
+	if (reg1_m != 0x10)
+	{
+	return false;
+	}
+#ifdef DEBUG
+	cout<<"begin(): Magnetometer enabled..."<<endl;
+#endif
+
+	// Set the gain to a known level
+	setMagGain(LSM303_MAGGAIN_1_3);
+
 	return true;
 }
 
