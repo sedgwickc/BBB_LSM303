@@ -38,6 +38,7 @@ class Adafruit_LSM303
 	#define SENSORS_GAUSS_TO_MICROTESLA (100) //Gauss to micro-Tesla multiplier
 	#define SENSORS_GRAVITY_EARTH       (9.80665F) // Earth's gravity in m/s^2 
 	#define SENSORS_GRAVITY_STANDARD	(SENSORS_GRAVITY_EARTH)
+	#define SCALE 						(2)
 /*=========================================================================*/
 
 /*=========================================================================
@@ -144,9 +145,9 @@ class Adafruit_LSM303
     -----------------------------------------------------------------------*/
     typedef struct lsm303AccelData_s
     {
-      float x;
-      float y;
-      float z;
+      int16_t x;
+      int16_t y;
+      int16_t z;
     } lsm303AccelData;
 /*=========================================================================*/
 	

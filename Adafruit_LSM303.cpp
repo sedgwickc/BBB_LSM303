@@ -80,18 +80,29 @@ void Adafruit_LSM303::cleanup(){
  @brief Reads accelerometer
  *****************************************************************************/
  void Adafruit_LSM303::readAccelerometer(){
- 	// send 0x80 to LSM303_REGISTER_ACCEL_OUT_X_L_A
-
  	// read 6 uint8_ts from LSM303_ADDRESS_ACCEL 
+ 	unsigned char *retval = i2c_accel->readRegisters(6,
+ 		(LSM303_REGISTER_ACCEL_OUT_X_L_A) | 0x80);
+#ifdef DEBUG
+	unsigned char status = i2c_accel->readRegister(LSM303_REGISTER_ACCEL_STATUS_REG_A);
+	cout<<"Accelerometer Status: "<<std::hex<<(unsigned int)status<<endl;
+#endif
  	// wait until data is available
- 	//
-    uint8_t xlo = 0;
-    uint8_t xhi = 0;
-    uint8_t ylo = 0;
-    uint8_t yhi = 0;
-    uint8_t zlo = 0;
-    uint8_t zhi = 0;
+ 	//only read data when STATUS_REG_A signal new data available
+    uint8_t xlo = (uint8_t)retval[0];
+    uint8_t xhi = (uint8_t)retval[1];
+    uint8_t ylo = (uint8_t)retval[2];
+    uint8_t yhi = (uint8_t)retval[3];
+    uint8_t zlo = (uint8_t)retval[4];
+    uint8_t zhi = (uint8_t)retval[5];
+
+#ifdef DEBUG
+	for( int i=0; i < 6; i++){
+		cout<<"Accel["<<i<<"]: "<<(unsigned int)retval[i]<<endl;
+	}
+#endif
 	// Shift values to create properly formed integer (low uint8_t first)
+	// Shift result by 4 since accellerometer data is only return in 12 MSB
 	this->_accelData.x = (int16_t)(xlo | (xhi << 8)) >> 4;
 	this->_accelData.y = (int16_t)(ylo | (yhi << 8)) >> 4;
 	this->_accelData.z = (int16_t)(zlo | (zhi << 8)) >> 4;
@@ -100,7 +111,7 @@ void Adafruit_LSM303::cleanup(){
 void Adafruit_LSM303::getAcceleration(float *x, float *y, float *z){
 
 	this->readAccelerometer();
-	
+	// sets x,y,z to values in metres/second
 	*x = this->_accelData.x * this->_lsm303Accel_MG_LSB * SENSORS_GRAVITY_STANDARD;
 	*y = this->_accelData.y * this->_lsm303Accel_MG_LSB * SENSORS_GRAVITY_STANDARD;
 	*z = this->_accelData.z * this->_lsm303Accel_MG_LSB * SENSORS_GRAVITY_STANDARD;
@@ -329,9 +340,13 @@ bool Adafruit_LSM303::begin()
 {
 	// Enable the accelerometer (100Hz)
 	this->writeCommand(LSM303_ADDRESS_ACCEL, LSM303_REGISTER_ACCEL_CTRL_REG1_A, 0x57);
+	// FS = 00 (+/- 2g ful scale)
+	this->writeCommand(LSM303_ADDRESS_ACCEL, LSM303_REGISTER_ACCEL_CTRL_REG4_A, 0x08);
 
 	// LSM303DLHC has no WHOAMI register so read CTRL_REG1_A back to check
 	// if we are connected or not
+	//Consider chaning this as the MSB may change based on select read rate
+	// if MSBs = 0x5 then data rate is 100Hz
 	uint8_t reg1_a = this->read8(LSM303_ADDRESS_ACCEL, LSM303_REGISTER_ACCEL_CTRL_REG1_A);
 	if (reg1_a != 0x57)
 	{
@@ -339,6 +354,8 @@ bool Adafruit_LSM303::begin()
 	}  
 #ifdef DEBUG
 	cout<<"begin(): Accelerometer enabled..."<<endl;
+	uint8_t control1 = read8(LSM303_ADDRESS_ACCEL,LSM303_REGISTER_ACCEL_CTRL_REG1_A);
+	cout<<"Power, rate and axes status: "<<std::hex<<(unsigned int)control1<<endl;
 #endif
 	// Enable the magnetometer
 	this->writeCommand(LSM303_ADDRESS_MAG, LSM303_REGISTER_MAG_MR_REG_M, 0x00);

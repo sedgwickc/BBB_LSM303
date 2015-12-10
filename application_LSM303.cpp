@@ -46,21 +46,22 @@ int main() {
 	float acc_x = 0.0;
 	float acc_y = 0.0;
 	float acc_z = 0.0;
+    int  millisec = 500;
+    struct timespec rec = {0};
+    rec.tv_sec = 0;
+    rec.tv_nsec = millisec * 1000000L;
 
-	std::cout<<"Getting acceleration and orientation..."<<endl;
 	LSM303.getOrientation(&mag_x, &mag_y, &mag_z);
-	LSM303.getAcceleration(&acc_x, &acc_y, &acc_z);
-	LSM303.cleanup();
-
-	std::cout<<"Acceleration:"<<endl;
-	std::cout<<"x: "<<acc_x<<endl;
-	std::cout<<"y: "<<acc_y<<endl;
-	std::cout<<"z: "<<acc_z<<endl;
 	
-	std::cout<<"Orientation:"<<endl;
-	std::cout<<"x: "<<mag_x<<endl;
-	std::cout<<"y: "<<mag_y<<endl;
-	std::cout<<"z: "<<mag_z<<endl;
-
+	std::cout<<"acc.x,acc.y,acc.z"<<endl;
+	for( int i = 0; i < 100; i++ ){
+		LSM303.getAcceleration(&acc_x, &acc_y, &acc_z);
+		std::cout<<acc_x;
+		std::cout<<","<<acc_y;
+		std::cout<<","<<acc_z<<endl;
+    	nanosleep(&rec, (struct timespec *) NULL);
+	}
+	LSM303.cleanup();
+	
 	return 0;
 }
