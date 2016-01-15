@@ -1,17 +1,18 @@
 /***************************************************************************
-  This is a library for the LSM303 pressure sensor
+  Author: Charles Sedgwick
+  Description: This is a library allowing the LSM303 pressure sensor to be 
+  used on the Beaglebone black via I2C. This library uses Intel's IoT libmraa 
+  library to handle I2C communication with the sensor.
 
   Designed specifically to work with the Adafruit LSM303 or LSM303 Breakout 
   ----> http://www.adafruit.com/products/391
   ----> http://www.adafruit.com/products/1603
 
-  These displays use I2C to communicate, 2 pins are required to interface.
+  The LSM303 use I2C to communicate, 2 pins are required to interface.
 
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit andopen-source hardware by purchasing products
-  from Adafruit!
 
-  Written by Kevin Townsend for Adafruit Industries.  
+  This port is based off of the Arduino code Written by Kevin Townsend for 
+  Adafruit Industries.  
   BSD license, all text above must be included in any redistribution
  ***************************************************************************/
 #ifndef __LSM303_H__

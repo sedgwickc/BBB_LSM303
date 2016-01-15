@@ -1,7 +1,6 @@
 /***************************************************************************
   This library is a port of Adafruit's LSM303 library for Arduino to the Beagle
-  Bone Black using Derek Molloy's I2CDevice library in the place of Wire.h to
-  communicate over I2C.
+  Bone Black using Intel's IoT libmraa library to handle I2C communication.
 
   This port is written and maintained by Charles Sedgwick. 
   This port retains the licence of the software it is based off of which is
