@@ -18,7 +18,8 @@
 #define __LSM303_H__
 
 #include <stdint.h>
-#include "../../I2CDevice.h"
+#include "mraa.hpp"
+using namespace mraa;
 
 namespace rover {
 
@@ -31,6 +32,9 @@ class Adafruit_LSM303
     #define LSM303_ADDRESS_ACCEL          (0x19)         // 0011001x
     #define LSM303_ADDRESS_MAG            (0x1E)         // 0011110x
 /*=========================================================================*/
+
+/*========================================================================*/
+	#define NUM_ACCEL_REG 6
 
 /*=========================================================================
     Constants
@@ -151,6 +155,15 @@ class Adafruit_LSM303
     } lsm303AccelData;
 /*=========================================================================*/
 	
+    typedef struct accelDataRaw_s
+    {
+      int8_t xlo;
+      int8_t xhi;
+      int8_t ylo;
+      int8_t yhi;
+      int8_t zlo;
+      int8_t zhi;
+    } accelDataRaw;
 /*=========================================================================
     CHIP ID
     -----------------------------------------------------------------------*/
@@ -174,11 +187,12 @@ private:
 	float _lsm303Mag_Gauss_LSB_Z;
 	float _lsm303Mag_Gauss_LSB_XY;
 
-	I2CDevice* i2c_mag;
-	I2CDevice* i2c_accel;
+	mraa::I2c* i2c_mag;
+	mraa::I2c* i2c_accel;
 	unsigned int I2CBus, I2CAddress;
+	unsigned int mag_addr, accel_addr;
 	virtual void writeCommand(unsigned int address, unsigned int reg, unsigned char value);
-	virtual uint8_t read8(unsigned int, unsigned int);
+	virtual uint8_t read8(unsigned int address, unsigned int reg);
 	virtual short combineRegisters(unsigned char, unsigned char);
  	virtual void readAccelerometer();
 	virtual void readMagnetometerData();

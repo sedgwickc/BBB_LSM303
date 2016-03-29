@@ -1,7 +1,7 @@
 /***************************************************************************
   This library is a port of Adafruit's LSM303 library for Arduino to the Beagle
-  Bone Black using Derek Molloy's I2CDevice library in the place of Wire.h to
-  communicate over I2C.
+  Bone Black using the MRAA library written by Intel to handle I2C
+  communication.
 
   This port is written and maintained by Charles Sedgwick. 
   This port retains the licence of the software it is based off of which is
@@ -33,6 +33,7 @@
 #include <time.h>
 
 using namespace std;
+using namespace rover;
 
 namespace rover {
 
@@ -59,8 +60,11 @@ short Adafruit_LSM303::combineRegisters(unsigned char msb, unsigned char lsb){
 */
 /**************************************************************************/
 Adafruit_LSM303::Adafruit_LSM303(unsigned int I2CBus){
-	this->i2c_mag = new I2CDevice(I2CBus, 0x1E);
-	this->i2c_accel = new I2CDevice(I2CBus, 0x19);
+	this->i2c_mag = new mraa::I2c(I2CBus);
+	this->mag_addr = LSM303_ADDRESS_MAG;
+	this->i2c_accel = new mraa::I2c(I2CBus);
+	this->accel_addr = LSM303_ADDRESS_ACCEL;
+	
 	this->_lsm303Accel_MG_LSB     = 0.001F;   // 1, 2, 4 or 12 mg per lsb
 	this->_lsm303Mag_Gauss_LSB_XY = 1100.0F;  // Varies with gain
 	this->_lsm303Mag_Gauss_LSB_Z  = 980.0F;   // Varies with gain
@@ -80,32 +84,27 @@ void Adafruit_LSM303::cleanup(){
  @brief Reads accelerometer
  *****************************************************************************/
  void Adafruit_LSM303::readAccelerometer(){
- 	// read 6 uint8_ts from LSM303_ADDRESS_ACCEL 
- 	unsigned char *retval = i2c_accel->readRegisters(6,
- 		(LSM303_REGISTER_ACCEL_OUT_X_L_A) | 0x80);
-#ifdef DEBUG
-	unsigned char status = i2c_accel->readRegister(LSM303_REGISTER_ACCEL_STATUS_REG_A);
-	cout<<"Accelerometer Status: "<<std::hex<<(unsigned int)status<<endl;
-#endif
+	this->i2c_accel->address(LSM303_ADDRESS_ACCEL);
  	// wait until data is available
  	//only read data when STATUS_REG_A signal new data available
-    uint8_t xlo = (uint8_t)retval[0];
-    uint8_t xhi = (uint8_t)retval[1];
-    uint8_t ylo = (uint8_t)retval[2];
-    uint8_t yhi = (uint8_t)retval[3];
-    uint8_t zlo = (uint8_t)retval[4];
-    uint8_t zhi = (uint8_t)retval[5];
-
-#ifdef DEBUG
-	for( int i=0; i < 6; i++){
-		cout<<"Accel["<<i<<"]: "<<(unsigned int)retval[i]<<endl;
+	// read or write to this address?
+	//this->i2c_accel->writeReg(LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80);
+	/* use i2c_accel->readBytesReg(uint8_t reg, uint8_t* data, int length) to
+	 * read multiple registers */
+	uint8_t accelDataRaw[NUM_ACCEL_REG];
+	int ret = this->i2c_accel->readBytesReg((LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80),
+		accelDataRaw, 6 );
+	if( ret < 0 ){
+		cerr<<"Adafruit_LSM303::readAccelerometer(): Error on reading accel data \
+			registers"<<endl;
+		return;
 	}
-#endif
+
 	// Shift values to create properly formed integer (low uint8_t first)
 	// Shift result by 4 since accellerometer data is only return in 12 MSB
-	this->_accelData.x = (int16_t)(xlo | (xhi << 8)) >> 4;
-	this->_accelData.y = (int16_t)(ylo | (yhi << 8)) >> 4;
-	this->_accelData.z = (int16_t)(zlo | (zhi << 8)) >> 4;
+	this->_accelData.x = (int16_t)(accelDataRaw[0] | (accelDataRaw[1] << 8)) >> 4;
+	this->_accelData.y = (int16_t)(accelDataRaw[3] | (accelDataRaw[4] << 8)) >> 4;
+	this->_accelData.z = (int16_t)(accelDataRaw[4] | (accelDataRaw[5] << 8)) >> 4;
 }
 
 void Adafruit_LSM303::getAcceleration(float *x, float *y, float *z){
@@ -306,9 +305,11 @@ void Adafruit_LSM303::setMagRate(lsm303MagRate rate)
 void Adafruit_LSM303::writeCommand(unsigned int address,unsigned int reg, unsigned char value)
 {
 	if( address == LSM303_ADDRESS_MAG ){
-		this->i2c_mag->writeRegister( reg, value );
+		this->i2c_mag->address(address);
+		this->i2c_mag->writeReg( reg, value );
 	}else if( address == LSM303_ADDRESS_ACCEL ){
-		this->i2c_accel->writeRegister( reg, value );
+		this->i2c_accel->address(address);
+		this->i2c_accel->writeReg( reg, value );
 	}else{
 		cout<<"writeCommand(): Invalid Address!"<<endl;
 	}
@@ -316,19 +317,20 @@ void Adafruit_LSM303::writeCommand(unsigned int address,unsigned int reg, unsign
 
 /**************************************************************************/
 /*!
-    @brief  Reads an 8 bit value over I2C
+    @brief  Reads an 8 bit value (byte) over I2C
 */
 /**************************************************************************/
 uint8_t Adafruit_LSM303::read8(unsigned int address, unsigned int reg)
 {
 	if( address == LSM303_ADDRESS_MAG ){
-		return (uint8_t)this->i2c_mag->readRegister(reg);
-	}else if( address == LSM303_ADDRESS_ACCEL ){
-		return (uint8_t)this->i2c_accel->readRegister(reg);
-	}else{
-		cout<<"writeCommand(): Invalid Address!"<<endl;
-		return 0;
+		this->i2c_mag->address(address);
+		return (uint8_t)this->i2c_mag->readReg(reg);
+	} else if( address == LSM303_ADDRESS_ACCEL ){
+		this->i2c_accel->address(address);
+		return (uint8_t)this->i2c_accel->readReg(reg);
 	}
+	cout<<"Adafruit_LSM303::read8(): Invalid sensor passed in."<<endl;
+	return 0;
 }
 
 /**************************************************************************/
@@ -350,6 +352,10 @@ bool Adafruit_LSM303::begin()
 	uint8_t reg1_a = this->read8(LSM303_ADDRESS_ACCEL, LSM303_REGISTER_ACCEL_CTRL_REG1_A);
 	if (reg1_a != 0x57)
 	{
+#ifdef DEBUG
+	cout<<"begin(): Invalid value found in register CTRL_REG1_A. Aborting..."<<endl;
+	cout<<"begin(): Invalid CTRL_REG1_A value: "<<reg1_a<<endl;
+#endif
 		return false;
 	}  
 #ifdef DEBUG
