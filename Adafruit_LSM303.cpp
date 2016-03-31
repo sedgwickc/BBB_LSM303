@@ -84,16 +84,10 @@ void Adafruit_LSM303::cleanup(){
  @brief Reads accelerometer
  *****************************************************************************/
  void Adafruit_LSM303::readAccelerometer(){
-	this->i2c_accel->address(LSM303_ADDRESS_ACCEL);
- 	// wait until data is available
- 	//only read data when STATUS_REG_A signal new data available
-	// read or write to this address?
-	//this->i2c_accel->writeReg(LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80);
-	/* use i2c_accel->readBytesReg(uint8_t reg, uint8_t* data, int length) to
-	 * read multiple registers */
 	uint8_t accelDataRaw[NUM_ACCEL_REG];
-	int ret = this->i2c_accel->readBytesReg((LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80),
-		accelDataRaw, 6 );
+	this->i2c_accel->address(LSM303_ADDRESS_ACCEL);
+ 	this->i2c_accel->writeByte(LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80);
+ 	int ret = this->i2c_accel->read(accelDataRaw, 6);
 	if( ret < 0 ){
 		cerr<<"Adafruit_LSM303::readAccelerometer(): Error on reading accel data \
 			registers"<<endl;
@@ -103,7 +97,7 @@ void Adafruit_LSM303::cleanup(){
 	// Shift values to create properly formed integer (low uint8_t first)
 	// Shift result by 4 since accellerometer data is only return in 12 MSB
 	this->_accelData.x = (int16_t)(accelDataRaw[0] | (accelDataRaw[1] << 8)) >> 4;
-	this->_accelData.y = (int16_t)(accelDataRaw[3] | (accelDataRaw[4] << 8)) >> 4;
+	this->_accelData.y = (int16_t)(accelDataRaw[2] | (accelDataRaw[3] << 8)) >> 4;
 	this->_accelData.z = (int16_t)(accelDataRaw[4] | (accelDataRaw[5] << 8)) >> 4;
 }
 
