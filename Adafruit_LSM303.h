@@ -171,7 +171,7 @@ class Adafruit_LSM303
 /*=========================================================================*/
 
 public:
-    Adafruit_LSM303(unsigned int I2CBus);
+    Adafruit_LSM303(int I2CBus);
 
     virtual bool  begin();
     virtual void getOrientation(float*x,float*y,float*z);

@@ -34,7 +34,7 @@ using namespace rover;
 
 int main() {
 
-	Adafruit_LSM303 LSM303(1);
+	Adafruit_LSM303 LSM303(2);
 	if( LSM303.begin() == false)
 	{
 		std::cout<<"Could not find a valid LSM303!\n"<<endl;
