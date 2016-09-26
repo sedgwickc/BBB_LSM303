@@ -1,4 +1,4 @@
-/***************************************************************************
+/******************************************************************************
   This library is a port of Adafruit's LSM303 library for Arduino to the Beagle
   Bone Black using the MRAA library written by Intel to handle I2C
   communication.
@@ -6,7 +6,20 @@
   This port is written and maintained by Charles Sedgwick. 
   This port retains the licence of the software it is based off of which is
   described below.
- ***************************************************************************
+
+  Github: https://github.com/sedgwickc/RoverDaemons/
+
+  Changlog
+
+  Ver    Date       User   Issue #  Change
+  -----------------------------------------------------------------------------
+  100 25sep2015  cwick              Initial creation. 
+  101 25sep2016  cwick     1        Add changelog. Add define for number of mag
+                                    registers. Retrieve data from magnetometer
+                                    registers. 
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!UPDATE VERSION VARIABLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ ******************************************************************************
   This is a library for the LSM303 pressure sensor
 
   Designed specifically to work with the Adafruit LSM303 or LSM303 Breakout 
@@ -36,6 +49,8 @@ using namespace std;
 using namespace rover;
 
 namespace rover {
+
+const int Adafruit_LSM303::version = 101;
 
 #define LSM303_USE_DATASHEET_VALS (0) /* Set to 1 for sanity check */
 
@@ -87,6 +102,7 @@ void Adafruit_LSM303::cleanup(){
 	uint8_t accelDataRaw[NUM_ACCEL_REG];
 	this->i2c_accel->address(LSM303_ADDRESS_ACCEL);
  	this->i2c_accel->writeByte(LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80);
+ 	/* read 6 accel data registers on LSM303 into array */
  	int ret = this->i2c_accel->read(accelDataRaw, 6);
 	if( ret < 0 ){
 		cerr<<"Adafruit_LSM303::readAccelerometer(): Error on reading accel data \
@@ -117,24 +133,36 @@ void Adafruit_LSM303::getAcceleration(float *x, float *y, float *z){
 */
 /**************************************************************************/
 void Adafruit_LSM303::readMagnetometerData(){
+    uint8_t magDataRaw[NUM_MAG_REG];
 	// write to LSM303_REGISTER_MAG_OUT_X_H_M
+	this->i2c_mag->address(LSM303_ADDRESS_MAG);
 	// request 6 uint8_ts from LSM303_ADDRESS_MAG
+ 	this->i2c_mag->writeByte(LSM303_REGISTER_MAG_OUT_X_H_M | 0x80);
 	// wait for data to be available
+ 	int ret = this->i2c_mag->read(magDataRaw, NUM_MAG_REG);
+	if( ret < 0 ){
+		cerr<<"Adafruit_LSM303::readMagentormeterData(): Error on reading \
+			Magnetometer data registers"<<endl;
+		return;
+	}
 
-	// read mag data once data is available
+	/* setup indeces for mag data */
 	uint8_t xhi = 0;
-	uint8_t xlo = 0;
-	uint8_t zhi = 0;
-	uint8_t zlo = 0;
-	uint8_t yhi = 0;
-	uint8_t ylo = 0;
+	uint8_t xlo = 1;
+	uint8_t zhi = 2;
+	uint8_t zlo = 3;
+	uint8_t yhi = 4;
+	uint8_t ylo = 5;
 
 	// Shift values to create properly formed integer (low uint8_t first)
-	this->_magData.x = (int16_t)(xlo | ((int16_t)xhi << 8));
-	this->_magData.y = (int16_t)(ylo | ((int16_t)yhi << 8));
-	this->_magData.z = (int16_t)(zlo | ((int16_t)zhi << 8));
+	this->_magData.x = (int16_t)(magDataRaw[xlo] | ((int16_t)magDataRaw[xhi] << 8));
+	this->_magData.y = (int16_t)(magDataRaw[ylo] | ((int16_t)magDataRaw[yhi] << 8));
+	this->_magData.z = (int16_t)(magDataRaw[zlo] | ((int16_t)magDataRaw[zhi] << 8));
 }
 
+/* getOrientation(float,float,float)
+ * parameters: ponters to where orientation data should be saved 
+ */
 void Adafruit_LSM303::getOrientation(float *x, float *y, float *z){
 	bool readingValid = false;
   

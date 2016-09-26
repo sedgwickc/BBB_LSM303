@@ -1,25 +1,13 @@
-/*
- * EBBGPIO.cpp  Created on: 29 Apr 2014
- * Copyright (c) 2014 Derek Molloy (www.derekmolloy.ie)
- * Made available for the book "Exploring BeagleBone"
- * See: www.exploringbeaglebone.com
- * Licensed under the EUPL V.1.1
- *
- * This Software is provided to You under the terms of the European
- * Union Public License (the "EUPL") version 1.1 as published by the
- * European Union. Any use of this Software, other than as authorized
- * under this License is strictly prohibited (to the extent such use
- * is covered by a right of the copyright holder of this Software).
- *
- * This Software is provided under the License on an "AS IS" basis and
- * without warranties of any kind concerning the Software, including
- * without limitation merchantability, fitness for a particular purpose,
- * absence of defects or errors, accuracy, and non-infringement of
- * intellectual property rights other than copyright. This disclaimer
- * of warranty is an essential part of the License and a condition for
- * the grant of any rights to this Software.
- *
- * For more details, see http://www.derekmolloy.ie/
+/* application_LSM303.cpp
+ * This program is used to test the C++ Beaglebone Black/Green LSM303 library 
+ * 
+ * Github: https://github.com/sedgwickc/RoverDaemons/
+ * Changlog
+ * Ver    Date       User   Issue #  Change
+ * --------------------------------------------------------------------------------
+ * 100 25sep2015  cwick              Initial creation. 
+ * 101 25sep2016  cwick     1        Add changelog. Add version output. Add
+ *                                   orientation output.
  */
 
 #include <iostream>
@@ -40,6 +28,9 @@ int main() {
 		std::cout<<"Could not find a valid LSM303!\n"<<endl;
 		return 0;
 	}
+
+	std::cout<<"LSM303 library version: v"<<LSM303.version<<endl;
+
 	float mag_x = 0.0;
 	float mag_y = 0.0;
 	float mag_z = 0.0;
@@ -56,9 +47,13 @@ int main() {
 	std::cout<<"acc.x,acc.y,acc.z"<<endl;
 	for( int i = 0; i < 100; i++ ){
 		LSM303.getAcceleration(&acc_x, &acc_y, &acc_z);
-		std::cout<<acc_x;
+		LSM303.getOrientation(&mag_x, &mag_y, &mag_z);
+		std::cout<<"Accel: "<<acc_x;
 		std::cout<<","<<acc_y;
-		std::cout<<","<<acc_z<<endl;
+		std::cout<<","<<acc_z<<"; Orient:";
+		std::cout<<mag_x;
+		std::cout<<","<<mag_y;
+		std::cout<<","<<mag_z<<endl;
     	nanosleep(&rec, (struct timespec *) NULL);
 	}
 	LSM303.cleanup();

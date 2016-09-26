@@ -1,5 +1,21 @@
-/***************************************************************************
-  This is a library for the LSM303 pressure sensor
+/******************************************************************************
+  This is a Beaglebone Black/Green Rev. C C++ library for the LSM303DLHC sensor
+
+  This code is based off of the Ardiuno driver written by Adafruit for their 
+  10DOF breakout board. This code retains the license used by Adafruit's 
+  original code. 
+
+  Github: https://github.com/sedgwickc/RoverDaemons/
+
+  Changlog
+
+  Ver    Date       User   Issue #  Change
+  --------------------------------------------------------------------------------
+  100 25sep2015  cwick              Initial creation. 
+  101 25sep2016  cwick     1        Add changelog. Add define for number of mag
+                                    registers
+
+  *****************************************************************************
 
   Designed specifically to work with the Adafruit LSM303 or LSM303 Breakout 
   ----> http://www.adafruit.com/products/391
@@ -13,7 +29,7 @@
 
   Written by Kevin Townsend for Adafruit Industries.  
   BSD license, all text above must be included in any redistribution
- ***************************************************************************/
+ *****************************************************************************/
 #ifndef __LSM303_H__
 #define __LSM303_H__
 
@@ -35,6 +51,7 @@ class Adafruit_LSM303
 
 /*========================================================================*/
 	#define NUM_ACCEL_REG 6
+	#define NUM_MAG_REG 6
 
 /*=========================================================================
     Constants
@@ -44,6 +61,7 @@ class Adafruit_LSM303
 	#define SENSORS_GRAVITY_STANDARD	(SENSORS_GRAVITY_EARTH)
 	#define SCALE 						(2)
 /*=========================================================================*/
+
 
 /*=========================================================================
     REGISTERS
@@ -171,6 +189,7 @@ class Adafruit_LSM303
 /*=========================================================================*/
 
 public:
+    const static int version;
     Adafruit_LSM303(int I2CBus);
 
     virtual bool  begin();
